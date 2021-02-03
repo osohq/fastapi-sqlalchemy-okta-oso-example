@@ -1,2 +1,5 @@
 **/node_modules
 **/.eslintcache
+**/venv
+**/__pycache__
+bear.db*
