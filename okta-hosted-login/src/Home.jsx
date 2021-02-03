@@ -12,41 +12,76 @@
 
 import { useOktaAuth } from '@okta/okta-react';
 import React, { useState, useEffect } from 'react';
-import { Button, Header } from 'semantic-ui-react';
+import { Button, Form, Header, Table } from 'semantic-ui-react';
+
+const SERVER = 'http://localhost:8000/bears';
 
 const Home = () => {
   const { authState, oktaAuth } = useOktaAuth();
   const [userInfo, setUserInfo] = useState(null);
+  const [token, setToken] = useState(null);
+  const [bears, setBears] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
+  const [name, setName] = useState('');
+  const [species, setSpecies] = useState(null);
 
   useEffect(() => {
     if (!authState.isAuthenticated) {
       // When user isn't authenticated, forget any user info
+      setToken(null);
       setUserInfo(null);
     } else {
+      setToken(oktaAuth.getAccessToken());
       oktaAuth.getUser().then((info) => {
         setUserInfo(info);
       });
     }
   }, [authState, oktaAuth]); // Update if authState changes
 
+  // Fetch bears.
+  useEffect(async () => {
+    if (token) {
+      const headers = { Authorization: `Bearer ${token}` };
+      try {
+        const res = await fetch(SERVER, { headers });
+        if (res.status === 200) {
+          const data = await res.json();
+          setBears(data);
+        } else {
+          console.error(res.status, res.detail);
+          setBears([]);
+        }
+      } catch (e) {
+        console.error(e);
+        setBears([]);
+      }
+    }
+  }, [token, submitted]);
+
+  // Create a new bear.
+  useEffect(async () => {
+    if (submitted) {
+      if (!name || !species) {
+        setSubmitted(false);
+        return;
+      }
+      const headers = { Authorization: `Bearer ${token}` };
+      setSubmitted(false);
+      try {
+        const body = JSON.stringify({ name, species });
+        await fetch(SERVER, { headers, method: 'POST', body });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setName('');
+        setSpecies(null);
+      }
+    }
+  }, [submitted]);
+
   const login = async () => {
     oktaAuth.signInWithRedirect();
   };
-
-  const resourceServerExamples = [
-    {
-      label: 'Node/Express Resource Server Example',
-      url: 'https://github.com/okta/samples-nodejs-express-4/tree/master/resource-server',
-    },
-    {
-      label: 'Java/Spring MVC Resource Server Example',
-      url: 'https://github.com/okta/samples-java-spring/tree/master/resource-server',
-    },
-    {
-      label: 'ASP.NET Core Resource Server Example',
-      url: 'https://github.com/okta/samples-aspnetcore/tree/master/samples-aspnetcore-3x/resource-server',
-    },
-  ];
 
   if (authState.isPending) {
     return (
@@ -57,10 +92,10 @@ const Home = () => {
   return (
     <div>
       <div>
-        <Header as="h1">PKCE Flow w/ Okta Hosted Login Page</Header>
+        <Header as="h1">Bear Management Service</Header>
 
         { authState.isAuthenticated && !userInfo
-        && <div>Loading user information...</div>}
+        && <div>Loading...</div>}
 
         {authState.isAuthenticated && userInfo
         && (
@@ -70,45 +105,55 @@ const Home = () => {
             {userInfo.name}
             !
           </p>
-          <p>
-            You have successfully authenticated against your Okta org, and have been redirected back to this application.  You now have an ID token and access token in local storage.
-            Visit the
-            {' '}
-            <a href="/profile">My Profile</a>
-            {' '}
-            page to take a look inside the ID token.
-          </p>
-          <h3>Next Steps</h3>
-          <p>Currently this application is a stand-alone front end application.  At this point you can use the access token to authenticate yourself against resource servers that you control.</p>
-          <p>This sample is designed to work with one of our resource server examples.  To see access token authentication in action, please download one of these resource server examples:</p>
-          <ul>
-            {resourceServerExamples.map((example) => <li key={example.url}><a href={example.url}>{example.label}</a></li>)}
-          </ul>
-          <p>
-            Once you have downloaded and started the example resource server, you can visit the
-            {' '}
-            <a href="/messages">My Messages</a>
-            {' '}
-            page to see the authentication process in action.
-          </p>
+
+          <Header as="h2">Create a new bear</Header>
+          <Form onSubmit={() => setSubmitted(true)}>
+            <Form.Group>
+              <Form.Input
+                placeholder="Name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <Form.Select
+                placeholder="Species"
+                options={
+                  ['black', 'brown', 'panda', 'polar', 'sloth', 'spectacled', 'sun']
+                    .map((text) => ({ key: text, value: text, text }))
+                }
+                name="species"
+                value={species}
+                onChange={(e) => setSpecies(e.target.innerText)}
+              />
+              <Form.Button content="Submit" />
+            </Form.Group>
+          </Form>
+
+          <Header as="h2">Bears</Header>
+          <Table basic>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Name</Table.HeaderCell>
+                <Table.HeaderCell>Species</Table.HeaderCell>
+                <Table.HeaderCell>Owner</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {bears.map((bear) => (
+                <Table.Row>
+                  <Table.Cell>{bear.name}</Table.Cell>
+                  <Table.Cell>{bear.species}</Table.Cell>
+                  <Table.Cell>{bear.owner}</Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
         </div>
         )}
 
         {!authState.isAuthenticated
         && (
         <div>
-          <p>If you&lsquo;re viewing this page then you have successfully started this React application.</p>
-          <p>
-            <span>This example shows you how to use the </span>
-            <a href="https://github.com/okta/okta-oidc-js/tree/master/packages/okta-react">Okta React Library</a>
-            <span> to add the </span>
-            <a href="https://developer.okta.com/docs/guides/implement-auth-code-pkce">PKCE Flow</a>
-            <span> to your application.</span>
-          </p>
-          <p>
-            When you click the login button below, you will be redirected to the login page on your Okta org.
-            After you authenticate, you will be returned to this application with an ID token and access token.  These tokens will be stored in local storage and can be retrieved at a later time.
-          </p>
           <Button id="login-button" primary onClick={login}>Login</Button>
         </div>
         )}

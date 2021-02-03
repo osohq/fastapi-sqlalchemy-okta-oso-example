@@ -13,7 +13,7 @@
 import { useOktaAuth } from '@okta/okta-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Container, Icon, Image, Menu } from 'semantic-ui-react';
+import { Container, Image, Menu } from 'semantic-ui-react';
 
 const Navbar = () => {
   const { authState, oktaAuth } = useOktaAuth();
@@ -27,20 +27,9 @@ const Navbar = () => {
         <Container>
           <Menu.Item header>
             <Image size="mini" src="/react.svg" />
-            &nbsp;
-            <Link to="/">Okta-React Sample Project</Link>
+            &nbsp;&nbsp;
+            <Link to="/">Bear Management Service</Link>
           </Menu.Item>
-          {authState.isAuthenticated && (
-          <Menu.Item id="messages-button">
-            <Icon name="mail outline" />
-            <Link to="/messages">Messages</Link>
-          </Menu.Item>
-          )}
-          {authState.isAuthenticated && (
-            <Menu.Item id="profile-button">
-              <Link to="/profile">Profile</Link>
-            </Menu.Item>
-          )}
           {authState.isAuthenticated && (
             <Menu.Item id="logout-button" onClick={logout}>Logout</Menu.Item>
           )}

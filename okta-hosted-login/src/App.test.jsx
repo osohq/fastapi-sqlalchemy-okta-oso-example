@@ -22,5 +22,5 @@ it('renders title link', async () => {
   });
 
   const linkElement = container.querySelector('a');
-  expect(linkElement.textContent.trim()).toBe('Okta-React Sample Project');
+  expect(linkElement.textContent.trim()).toBe('Bear Management Service');
 });
