@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from okta_jwt.jwt import validate_token
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.config import Config
+from oso import Oso
 
 from app.crud import create_bear, get_or_create_user_by_email, list_bears
 from app.db import engine, setup_db
@@ -15,6 +16,9 @@ from app.seed import seed_db
 # Load environment variables.
 conf = Config(".env")
 issuer, audience, client_id = conf("ISSUER"), conf("AUDIENCE"), conf("CLIENT_ID")
+
+# Initialize Oso.
+oso = Oso()
 
 
 def get_db():
