@@ -6,9 +6,10 @@ from okta_jwt.jwt import validate_token
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.config import Config
 from oso import Oso
+from sqlalchemy_oso import register_models
 
 from app.crud import create_bear, get_or_create_user_by_email, list_bears
-from app.db import engine, setup_db
+from app.db import engine, setup_db, Base
 from app.models import User
 from app.schemas import Bear, BearBase
 from app.seed import seed_db
@@ -19,6 +20,7 @@ issuer, audience, client_id = conf("ISSUER"), conf("AUDIENCE"), conf("CLIENT_ID"
 
 # Initialize Oso.
 oso = Oso()
+register_models(oso, Base)
 oso.load_file("app/policy.polar")
 
 
