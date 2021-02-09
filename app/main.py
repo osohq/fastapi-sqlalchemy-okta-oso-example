@@ -10,7 +10,7 @@ from sqlalchemy_oso import register_models, authorized_sessionmaker
 
 from app.crud import create_bear, get_or_create_user_by_email, list_bears
 from app.db import engine, setup_db, Base
-from app.models import User
+from app.models import User, Species
 from app.schemas import Bear, BearBase
 from app.seed import seed_db
 
@@ -22,6 +22,7 @@ issuer, audience, client_id = conf("ISSUER"), conf("AUDIENCE"), conf("CLIENT_ID"
 oso = Oso()
 register_models(oso, Base)
 oso.register_class(BearBase)
+oso.register_constant(Species, "Species")
 oso.load_file("app/policy.polar")
 
 
