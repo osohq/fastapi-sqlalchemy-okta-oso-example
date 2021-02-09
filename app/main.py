@@ -21,6 +21,7 @@ issuer, audience, client_id = conf("ISSUER"), conf("AUDIENCE"), conf("CLIENT_ID"
 # Initialize Oso.
 oso = Oso()
 register_models(oso, Base)
+oso.register_class(BearBase)
 oso.load_file("app/policy.polar")
 
 
