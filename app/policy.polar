@@ -3,4 +3,5 @@ allow(user: User, "create", _: BearBase) if
 
 allow(_: User, "index", _: User);
 
-allow(_: User, "index", _: Bear);
+allow(user: User, "index", bear: Bear) if
+    bear.owner = user;
