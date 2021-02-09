@@ -5,4 +5,5 @@ allow(_: User, "index", _: User);
 
 allow(user: User, "index", bear: Bear) if
     bear.owner = user or
-    bear.species = Species.polar;
+    bear.species in [Species.panda, Species.polar] or
+    bear.name = "Smokey";
