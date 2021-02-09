@@ -74,4 +74,6 @@ def index(db: Session = Depends(get_db)):
 
 @app.post("/bears", response_model=Bear)
 def create(request: Request, bear: BearBase, db: Session = Depends(get_db)):
+    if not oso.is_allowed(request.state.user, "create", bear):
+        raise HTTPException(403)
     return create_bear(db, bear, request.state.user)
