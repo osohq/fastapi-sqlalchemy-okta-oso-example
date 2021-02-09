@@ -6,7 +6,7 @@ from okta_jwt.jwt import validate_token
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.config import Config
 from oso import Oso
-from sqlalchemy_oso import register_models
+from sqlalchemy_oso import register_models, authorized_sessionmaker
 
 from app.crud import create_bear, get_or_create_user_by_email, list_bears
 from app.db import engine, setup_db, Base
@@ -52,6 +52,17 @@ def current_user(
         raise HTTPException(403, str(e))
 
 
+def get_authorized_db(request: Request):
+    get_oso = lambda: oso
+    get_user = lambda: request.state.user
+    get_action = lambda: request.scope["endpoint"].__name__
+    db = authorized_sessionmaker(get_oso, get_user, get_action, bind=engine)()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 # Reset and seed database.
 setup_db()
 seed_db(next(get_db()))
@@ -68,7 +79,7 @@ app.add_middleware(
 
 
 @app.get("/bears", response_model=List[Bear])
-def index(db: Session = Depends(get_db)):
+def index(db: Session = Depends(get_authorized_db)):
     return list_bears(db)
 
 
