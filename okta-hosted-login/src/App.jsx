@@ -28,7 +28,7 @@ const App = () => (
       <Container text style={{ marginTop: '7em' }}>
         <Switch>
           <Route path="/" exact component={Home} />
-          <Route path="/login/callback" component={LoginCallback} />
+          <Route path="/callback" component={LoginCallback} />
         </Switch>
       </Container>
     </Security>
