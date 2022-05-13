@@ -5,12 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from okta_jwt.jwt import validate_token
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.config import Config
-from oso import Oso
-from sqlalchemy_oso import register_models, authorized_sessionmaker
+from sqlalchemy_oso import SQLAlchemyOso, authorized_sessionmaker
 
 from app.crud import create_bear, get_or_create_user_by_email, list_bears
 from app.db import engine, setup_db, Base
-from app.models import User, Species
+from app.models import User, Species, Bear as SABear
 from app.schemas import Bear, BearBase
 from app.seed import seed_db
 
@@ -19,11 +18,10 @@ conf = Config(".env")
 issuer, audience, client_id = conf("ISSUER"), conf("AUDIENCE"), conf("CLIENT_ID")
 
 # Initialize Oso.
-oso = Oso()
-register_models(oso, Base)
-oso.register_class(BearBase)
+oso = SQLAlchemyOso(Base)
+oso.register_class(BearBase) # Pydantic Bear model
 oso.register_constant(Species, "Species")
-oso.load_file("app/policy.polar")
+oso.load_files(["app/policy.polar"])
 
 
 def get_db():
@@ -56,8 +54,8 @@ def current_user(
 def get_authorized_db(request: Request):
     get_oso = lambda: oso
     get_user = lambda: request.state.user
-    get_action = lambda: request.scope["endpoint"].__name__
-    db = authorized_sessionmaker(get_oso, get_user, get_action, bind=engine)()
+    get_checked_permissions = lambda: { k: request.scope["endpoint"].__name__ for k in [User, SABear] }
+    db = authorized_sessionmaker(get_oso, get_user, get_checked_permissions, bind=engine)()
     try:
         yield db
     finally:
